@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 import {
   Form,
   FormControl,
@@ -26,7 +27,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
+  email: z.email({ message: "Invalid email address" }),
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters" }),
@@ -34,6 +35,7 @@ const formSchema = z.object({
 
 export function LoginForm({ className }: { className: string }) {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,10 +48,14 @@ export function LoginForm({ className }: { className: string }) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true);
-      await login(values.email, values.password);
-      toast.success("Login successful!");
-    } catch (error) {
+      const res = await login(values.email, values.password);
+      if (res) {
+        toast.success("Login successful!");
+        router.push("/dashboard");
+      }
+    } catch (err) {
       toast.error("Login failed. Please try again.");
+      console.log(err);
     } finally {
       setIsLoading(false);
     }
